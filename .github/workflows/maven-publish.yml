@@ -28,9 +28,6 @@ jobs:
         run: |
           echo "$GPG_PRIVATE_KEY" | base64 --decode | gpg --batch --import
           echo "🔓 GPG Key Imported Successfully"
-          
-          # Verifica que la clave está correctamente importada
-          gpg --list-secret-keys --keyid-format LONG
 
       - name: 📦 Configure Maven
         run: |

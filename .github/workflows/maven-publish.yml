@@ -1,0 +1,60 @@
+name: Publish Parent POM to Maven Central
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  deploy:
+    name: Deploy Parent POM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🔽 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Set Up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          server-id: 'ossrh'
+          settings-path: ${{ github.workspace }}
+
+      - name: 🔑 Import GPG Key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "$GPG_PRIVATE_KEY" | base64 --decode | gpg --batch --import
+          echo "allow-preset-passphrase" | gpgconf --change-options gpg-agent
+          gpg --passphrase $GPG_PASSPHRASE --pinentry-mode loopback --export-secret-keys > /tmp/private.key
+          gpg --batch --import /tmp/private.key
+
+      - name: 📦 Configure Maven
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml <<EOF
+          <settings>
+            <servers>
+              <server>
+                <id>ossrh</id>
+                <username>${{ secrets.OSSRH_USERNAME }}</username>
+                <password>${{ secrets.OSSRH_PASSWORD }}</password>
+              </server>
+            </servers>
+            <profiles>
+              <profile>
+                <id>gpg</id>
+                <properties>
+                  <gpg.executable>gpg</gpg.executable>
+                  <gpg.passphrase>${{ secrets.GPG_PASSPHRASE }}</gpg.passphrase>
+                </properties>
+              </profile>
+            </profiles>
+          </settings>
+          EOF
+
+      - name: 🚀 Deploy to Maven Central
+        run: |
+          mvn clean deploy -P release -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }} --batch-mode

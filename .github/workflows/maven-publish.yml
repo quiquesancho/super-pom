@@ -28,12 +28,15 @@ jobs:
         run: |
           echo "$GPG_PRIVATE_KEY" | base64 --decode | gpg --batch --import
           echo "🔓 GPG Key Imported Successfully"
-          gpg --list-keys
 
       - name: 📦 Configure Maven
         run: |
           mvn clean install
 
       - name: 🚀 Deploy to Maven Central
+        env:
+          GPG_TTY: $(tty)
         run: |
+          echo "use-agent" >> ~/.gnupg/gpg.conf
+          echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
           mvn clean deploy -P release -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }} --batch-mode

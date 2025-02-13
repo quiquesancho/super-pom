@@ -28,6 +28,7 @@ jobs:
         run: |
           echo "$GPG_PRIVATE_KEY" | base64 --decode | gpg --batch --import
           echo "🔓 GPG Key Imported Successfully"
+          gpg --list-keys
 
       - name: 📦 Configure Maven
         run: |

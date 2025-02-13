@@ -31,7 +31,7 @@ jobs:
 
       - name: 📦 Configure Maven
         run: |
-          mvn clean install
+          mvn clean install -X
 
       - name: 🚀 Deploy to Maven Central
         env:
